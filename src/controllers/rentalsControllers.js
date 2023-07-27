@@ -37,3 +37,30 @@ export const addRental = async (req, res) => {
         res.sendStatus(400)
     }
 }
+
+export const getRentals = async (req, res) => {
+    try{
+        const rentals = (await db.query(`
+            SELECT rentals.*, games.name AS game, customers.name AS customer 
+            FROM rentals 
+            JOIN customers ON rentals."customerId" = customers.id
+            JOIN games ON rentals."gameId" = games.id; 
+        `)).rows;
+
+        rentals.map(x => {
+            x.customer = {
+                name: x.customer,
+                id: x.customerId
+            }
+            x.game = {
+                name: x.game,
+                id: x.gameId
+            }
+        })
+
+        res.send(rentals)
+    }
+    catch{
+        res.sendStatus(400)
+    }
+}
