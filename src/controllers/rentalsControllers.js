@@ -73,7 +73,8 @@ export const returnRental = async (req, res) => {
 
     try{
         const rental = (await db.query(`SELECT * FROM rentals WHERE id=$1`, [id])).rows[0]
-
+        if (!rental) return res.sendStatus(404)
+        if (rental.returnDate) return res.sendStatus(400)
         const rentDate = dayjs(rental.rentDate).add(rental.daysRented, 'day').startOf('day')
         const difDate = Math.floor((date - rentDate)/86400000)
         console.log(difDate)
@@ -97,3 +98,20 @@ export const returnRental = async (req, res) => {
         res.sendStatus(400)
     }
 }
+
+export const deleteRental = async (req, res) => {
+    const {id} = req.params;
+
+    try{
+        const rental = (await db.query(`SELECT * FROM rentals WHERE id=$1`, [id])).rows[0]
+        if (!rental) return res.sendStatus(404)
+        if (!rental.returnDate) return res.sendStatus(400)
+
+        await db.query(`DELETE FROM rentals WHERE id=$1;`, [id])
+        res.sendStatus(200)
+    }   
+    catch{
+        res.sendStatus(400)
+    }
+}
+
