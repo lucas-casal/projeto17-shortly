@@ -17,8 +17,12 @@ export const addGames = async (req, res) =>{
 }
 
 export const getGames = async (req, res) =>{
+    const {name} = req.query;
+
     try{
-        const games = (await db.query(`SELECT * FROM games;`)).rows;
+        const games = name ? (await db.query(`SELECT * FROM games WHERE lower(name) LIKE lower($1);`, [name + '%'])).rows : (await db.query(`SELECT * FROM games;`)).rows;
+        
+        
         res.status(200).send(games)
     }
     catch{

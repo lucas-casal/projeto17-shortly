@@ -19,9 +19,10 @@ export const addCustomer = async (req, res) => {
     }
 }
 export const getAllCustomers = async (req, res) => {
-
+    const {cpf} = req.query
     try{
-        const customersList = (await db.query(`SELECT * FROM customers;`)).rows
+        const customersList = cpf ? (await db.query(`SELECT * FROM customers WHERE cpf LIKE $1;`, [cpf + '%'])).rows : (await db.query(`SELECT * FROM customers;`)).rows;
+
 
         if (!customersList) return res.status(404).send('No customers registered')
 

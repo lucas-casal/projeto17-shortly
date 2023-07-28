@@ -39,13 +39,19 @@ export const addRental = async (req, res) => {
 }
 
 export const getRentals = async (req, res) => {
+    const {customerId, gameId} = req.query;
+    const queryInfo = customerId && gameId ? [customerId, gameId] : (customerId ? [customerId] : (gameId ? [gameId] : []))
+    console.log(queryInfo)
     try{
         const rentals = (await db.query(`
             SELECT rentals.*, games.name AS game, customers.name AS customer 
             FROM rentals 
             JOIN customers ON rentals."customerId" = customers.id
-            JOIN games ON rentals."gameId" = games.id; 
-        `)).rows;
+            JOIN games ON rentals."gameId" = games.id 
+            ${customerId && gameId ? `WHERE "customerId"=$1 AND "gameId"=$2`: (customerId ? `WHERE "customerId"=$1`: (gameId ? `WHERE "gameId"=$1` : ``)) }; 
+            `, queryInfo)).rows;
+
+
 
         rentals.map(x => {
             x.customer = {
