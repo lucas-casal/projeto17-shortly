@@ -1,14 +1,17 @@
+import dayjs from "dayjs";
 import { db } from "../database.js";
 
 export const addCustomer = async (req, res) => {
     const {name, phone, cpf, birthday} = req.body;
+    const niver = dayjs(birthday).format("YYYY-MM-DD")
+    console.log(niver)
 
     try{
-        const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])
+        const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1;`, [cpf])
 
         if (userRegistered.rows[0]) return res.sendStatus(409)
 
-        await db.query(`INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4)`, [name, phone, cpf, birthday])
+        await db.query(`INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4);`, [name, phone, cpf, niver])
 
         res.sendStatus(201)
     }
@@ -19,11 +22,14 @@ export const addCustomer = async (req, res) => {
 export const getAllCustomers = async (req, res) => {
 
     try{
-        const costumersList = (await db.query(`SELECT * FROM customers`)).rows
+        const customersList = (await db.query(`SELECT * FROM customers`)).rows
 
-        if (!costumersList) return res.status(404).send('No costumers registered')
+        if (!customersList) return res.status(404).send('No customers registered')
 
-        res.send(costumersList)
+        customersList.map(x => {
+            x.birthday = x.birthday.format('YYYY-MM-DD')
+        })
+        res.send(customersList)
     }
     catch{
         res.sendStatus(400)
@@ -31,12 +37,17 @@ export const getAllCustomers = async (req, res) => {
 }
 export const getCustomer = async (req, res) => {
     const {id} = req.params;
-    if (isNaN(id) || !Number.isInteger(parseFloat(id)) || id < 0) return res.sendStatus(422)
+    if (isNaN(id) || !Number.isInteger(parseFloat(id)) || id < 0) return res.sendStatus(400)
     try{
         const userRegistered = await (await db.query(`SELECT * FROM customers WHERE id=$1`, [id])).rows[0]
-
+        
         if (!userRegistered) return res.sendStatus(404)
 
+        const formatado = dayjs(userRegistered.birthday).format("YYYY-MM-DD");
+        
+        console.log(formatado)
+        userRegistered.birthday = formatado
+        console.log(userRegistered)
         res.send(userRegistered)
     }
     catch{
@@ -49,7 +60,7 @@ export const putCustomer = async (req, res) => {
 
     try{
         const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])
-        if (userRegistered.rows[0]?.id !== parseInt(id)) return res.sendStatus(409)
+        if (userRegistered.rows[0].id !== parseInt(id)) return res.sendStatus(409)
 
         await db.query(
             `

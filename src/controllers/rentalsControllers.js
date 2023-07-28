@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 export const addRental = async (req, res) => {
     const {customerId, gameId, daysRented} = req.body;
-    const rentDate = dayjs().format('DD/MM/YYYY')
+    const rentDate = dayjs().format('YYYY-MM-DD')
 
     try{
         const game = (await db.query(`
