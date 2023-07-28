@@ -4,7 +4,6 @@ import { db } from "../database.js";
 export const addCustomer = async (req, res) => {
     const {name, phone, cpf, birthday} = req.body;
     const niver = dayjs(birthday).format("YYYY-MM-DD")
-    console.log(niver)
 
     try{
         const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1;`, [cpf])
@@ -57,7 +56,7 @@ export const getCustomer = async (req, res) => {
 export const putCustomer = async (req, res) => {
     const {id} = req.params;
     const {name, phone, cpf, birthday} = req.body;
-
+    const niver = dayjs(birthday).format("YYYY-MM-DD")
     try{
         const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])
         if (userRegistered.rows[0].id !== parseInt(id)) return res.sendStatus(409)
@@ -67,7 +66,7 @@ export const putCustomer = async (req, res) => {
             UPDATE customers 
             SET name=$1, phone=$2, cpf=$3, birthday=$4
             WHERE id=$5;
-            `, [name, phone, cpf, birthday, id]
+            `, [name, phone, cpf, niver, id]
         )
         res.sendStatus(200)
     }
