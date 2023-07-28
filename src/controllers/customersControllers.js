@@ -22,13 +22,15 @@ export const addCustomer = async (req, res) => {
 export const getAllCustomers = async (req, res) => {
 
     try{
-        const customersList = (await db.query(`SELECT * FROM customers`)).rows
+        const customersList = (await db.query(`SELECT * FROM customers;`)).rows
 
         if (!customersList) return res.status(404).send('No customers registered')
 
         customersList.map(x => {
-            x.birthday = x.birthday.format('YYYY-MM-DD')
+            const formatado = dayjs(x.birthday).format("YYYY-MM-DD");
+            x.birthday = formatado
         })
+
         res.send(customersList)
     }
     catch{
@@ -45,9 +47,7 @@ export const getCustomer = async (req, res) => {
 
         const formatado = dayjs(userRegistered.birthday).format("YYYY-MM-DD");
         
-        console.log(formatado)
         userRegistered.birthday = formatado
-        console.log(userRegistered)
         res.send(userRegistered)
     }
     catch{
