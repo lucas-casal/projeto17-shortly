@@ -58,8 +58,10 @@ export const putCustomer = async (req, res) => {
     const {name, phone, cpf, birthday} = req.body;
     const niver = dayjs(birthday).format("YYYY-MM-DD")
     try{
-        const userRegistered = await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])
-        if (userRegistered.rows[0].id !== parseInt(id)) return res.sendStatus(409)
+        const userRegistered = (await db.query(`SELECT * FROM customers WHERE id=$1`, [id])).rows[0]
+        const userWithCPF = (await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])).rows[0]
+
+        if (userWithCPF.id !== userRegistered.id) return res.sendStatus(409)
 
         await db.query(
             `
