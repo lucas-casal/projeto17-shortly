@@ -39,11 +39,19 @@ export const addRental = async (req, res) => {
 }
 
 export const getRentals = async (req, res) => {
-    const {customerId, gameId, limit, offset, desc} = req.query;
+    const {status, customerId, gameId, limit, offset, desc, startDate} = req.query;
     let {order} = req.query;
+
+    const returned = status==='open' ? 'IS NULL' : (status==='closed' ? 'IS NOT NULL' : '')
+    const whereArray = []
+    status ? whereArray.push(returned) : ''
+    customerId ? whereArray.push('customerId') : ''
+    startDate ? whereArray.push('startDate') : ''
+    gameId ? whereArray.push('gameId') : ''
 
     const queryInfo = []
     customerId ? queryInfo.push(customerId) : ''
+    startDate ? queryInfo.push(startDate) : ''
     gameId ? queryInfo.push(gameId) : ''
     limit ? queryInfo.push(limit): ''
     offset ? queryInfo.push(offset): ''
@@ -51,6 +59,7 @@ export const getRentals = async (req, res) => {
 
     const indexArray = ['']
     customerId ? indexArray.push('customerId') : ''
+    startDate ? indexArray.push('startDate') : ''
     gameId ? indexArray.push('gameId') : ''
     limit ? indexArray.push('limit'): ''
     offset ? indexArray.push('offset'): ''
@@ -60,10 +69,23 @@ export const getRentals = async (req, res) => {
         order = order.slice(0, order.indexOf(';'))
     }
 
-console.log(queryInfo)
-console.log(order)
-    
-    
+    function where(){
+        return (`${returned ? `WHERE "returnDate" ${whereArray[0]}` : ''} 
+        ${customerId ? `${returned ? `AND` : `WHERE`} "customerId"=$${indexArray.indexOf('customerId')}` : ''}
+        ${startDate ? `${whereArray.indexOf('startDate')>0 ? `AND` : `WHERE`} "rentDate" >= $${indexArray.indexOf('startDate')}` : ''}
+        ${gameId ? `${whereArray.length > 1 ? `AND` : `WHERE`} "gameId"=$${indexArray.indexOf('gameId')}` : ''}
+        `)
+    }
+
+    console.log(`SELECT rentals.*, games.name AS game, customers.name AS customer 
+        FROM rentals 
+        JOIN customers ON rentals."customerId" = customers.id
+        JOIN games ON rentals."gameId" = games.id 
+        ${where()}
+        ${order ? `ORDER BY ${order} ${desc ? `DESC` : ``}` : ``}
+        ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
+        ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
+        ;`, queryInfo)
     
     try{
         const rentals = (await db.query(`
@@ -71,7 +93,7 @@ console.log(order)
             FROM rentals 
             JOIN customers ON rentals."customerId" = customers.id
             JOIN games ON rentals."gameId" = games.id 
-            ${customerId && gameId ? `WHERE "customerId"=$${indexArray.indexOf('customerId')} AND "gameId"=$${indexArray.indexOf('gameId')}`: (customerId ? `WHERE "customerId"=$${indexArray.indexOf('customerId')}`: (gameId ? `WHERE "gameId"=$${indexArray.indexOf('gameId')}` : ``)) }
+            ${where()}
             ${order ? `ORDER BY ${order} ${desc ? `DESC` : ``}` : ``}
             ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
             ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
