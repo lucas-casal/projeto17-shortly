@@ -19,12 +19,35 @@ export const addCustomer = async (req, res) => {
     }
 }
 export const getAllCustomers = async (req, res) => {
-    const {cpf} = req.query
+    const {cpf, offset, limit, desc} = req.query
+    let {order} = req.query
+    const queryInfo = []
+    cpf ? queryInfo.push(cpf+'%'): ''
+    limit ? queryInfo.push(limit): ''
+    offset ? queryInfo.push(offset): ''
+
+
+    const indexArray = ['']
+    cpf ? indexArray.push('cpf') : ''
+    limit ? indexArray.push('limit'): ''
+    offset ? indexArray.push('offset'): ''
+
+
+    if(order?.includes(';')){
+        order = order.slice(0, order.indexOf(';'))
+    }
+
+
     try{
-        const customersList = cpf ? (await db.query(`SELECT * FROM customers WHERE cpf LIKE $1;`, [cpf + '%'])).rows : (await db.query(`SELECT * FROM customers;`)).rows;
+        const customersList = (await db.query(`
+        SELECT * 
+        FROM customers 
+        ${cpf ? `WHERE cpf LIKE $${indexArray.indexOf('cpf')} ` : ``}
+        ${order ? `ORDER BY ${order} ${desc ? "DESC" : ''}` : ``}
+        ${limit ? `LIMIT $${indexArray.indexOf('limit')} ` : ``}
+        ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
+        ;`, queryInfo)).rows
 
-
-        if (!customersList) return res.status(404).send('No customers registered')
 
         customersList.map(x => {
             const formatado = dayjs(x.birthday).format("YYYY-MM-DD");
