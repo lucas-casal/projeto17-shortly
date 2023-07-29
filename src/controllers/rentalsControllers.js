@@ -94,7 +94,7 @@ export const getRentals = async (req, res) => {
             JOIN customers ON rentals."customerId" = customers.id
             JOIN games ON rentals."gameId" = games.id 
             ${where()}
-            ${order ? `ORDER BY ${order} ${desc ? `DESC` : ``}` : ``}
+            ${order ? `ORDER BY "${order}" ${desc ? `DESC` : ``}` : ``}
             ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
             ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
             ;`, queryInfo)).rows;

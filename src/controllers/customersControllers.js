@@ -84,8 +84,9 @@ export const putCustomer = async (req, res) => {
     try{
         const userRegistered = (await db.query(`SELECT * FROM customers WHERE id=$1`, [id])).rows[0]
         const userWithCPF = (await db.query(`SELECT * FROM customers WHERE cpf=$1`, [cpf])).rows[0]
-
-        if (userWithCPF.id !== userRegistered.id) return res.sendStatus(409)
+        console.log(userRegistered)
+        console.log(userWithCPF)
+        if (userWithCPF? userWithCPF.id !== userRegistered.id : false) return res.sendStatus(409)
 
         await db.query(
             `
