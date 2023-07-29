@@ -39,17 +39,43 @@ export const addRental = async (req, res) => {
 }
 
 export const getRentals = async (req, res) => {
-    const {customerId, gameId} = req.query;
-    const queryInfo = customerId && gameId ? [customerId, gameId] : (customerId ? [customerId] : (gameId ? [gameId] : []))
-    console.log(queryInfo)
+    const {customerId, gameId, limit, offset, desc} = req.query;
+    let {order} = req.query;
+
+    const queryInfo = []
+    customerId ? queryInfo.push(customerId) : ''
+    gameId ? queryInfo.push(gameId) : ''
+    limit ? queryInfo.push(limit): ''
+    offset ? queryInfo.push(offset): ''
+
+
+    const indexArray = ['']
+    customerId ? indexArray.push('customerId') : ''
+    gameId ? indexArray.push('gameId') : ''
+    limit ? indexArray.push('limit'): ''
+    offset ? indexArray.push('offset'): ''
+
+
+    if(order?.includes(';')){
+        order = order.slice(0, order.indexOf(';'))
+    }
+
+console.log(queryInfo)
+console.log(order)
+    
+    
+    
     try{
         const rentals = (await db.query(`
             SELECT rentals.*, games.name AS game, customers.name AS customer 
             FROM rentals 
             JOIN customers ON rentals."customerId" = customers.id
             JOIN games ON rentals."gameId" = games.id 
-            ${customerId && gameId ? `WHERE "customerId"=$1 AND "gameId"=$2`: (customerId ? `WHERE "customerId"=$1`: (gameId ? `WHERE "gameId"=$1` : ``)) }; 
-            `, queryInfo)).rows;
+            ${customerId && gameId ? `WHERE "customerId"=$${indexArray.indexOf('customerId')} AND "gameId"=$${indexArray.indexOf('gameId')}`: (customerId ? `WHERE "customerId"=$${indexArray.indexOf('customerId')}`: (gameId ? `WHERE "gameId"=$${indexArray.indexOf('gameId')}` : ``)) }
+            ${order ? `ORDER BY ${order} ${desc ? `DESC` : ``}` : ``}
+            ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
+            ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
+            ;`, queryInfo)).rows;
 
 
 
