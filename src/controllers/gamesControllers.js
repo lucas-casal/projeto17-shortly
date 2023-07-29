@@ -42,7 +42,7 @@ export const getGames = async (req, res) =>{
         SELECT * 
         FROM games 
         ${name ? `WHERE lower(name) LIKE lower($${indexArray.indexOf('name')})` : ``}
-        ${order ? `ORDER BY ${order} ${desc ? `DESC`: ``}` : ``}
+        ${order ? `ORDER BY "${order}" ${desc ? `DESC`: ``}` : ``}
         ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
         ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
         ;`, queryInfo)).rows
