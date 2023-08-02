@@ -8,6 +8,6 @@ export const addUserSchema = Joi.object({
 })
 
 export const LoginSchema = Joi.object({
-    username: Joi.string().required(),
+    email: Joi.string().email().required(),
     password: Joi.string().required()
 })

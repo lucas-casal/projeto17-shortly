@@ -17,23 +17,23 @@ export const addUser = async (req, res) => {
         res.sendStatus(201)
     }
     catch{
-        res.sendStatus(422)
+        res.sendStatus(400)
     }
 }
 
 export const login = async (req, res) => {
-    const {username, password} = req.body;
+    const {email, password} = req.body;
     const token = uuid();
     console.log(token)
     try{
 
-        const userRegistered = await (await db.query(`SELECT * FROM users WHERE username=$1;`, [username])).rows[0]
+        const userRegistered = await (await db.query(`SELECT * FROM users WHERE email=$1;`, [email])).rows[0]
         console.log(userRegistered)
         if (!userRegistered) return res.sendStatus(404);
         if (!bcrypt.compareSync(password, userRegistered.password)) return res.sendStatus(401);
 
-        await db.query(`INSERT INTO sessions (user_id, token) VALUES ($1, $2);`, [userRegistered.id, token])
-        res.status(201).send(token)
+        await db.query(`INSERT INTO tokens (user_id, token) VALUES ($1, $2);`, [userRegistered.id, token])
+        res.status(200).send(token)
     }
     catch{
         res.sendStatus(400)
