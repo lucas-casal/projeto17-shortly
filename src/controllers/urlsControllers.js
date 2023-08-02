@@ -1,22 +1,32 @@
 import {db} from '../database.js'
+import { nanoid } from 'nanoid';
 
-export const addGames = async (req, res) =>{
-    const {name, image, stockTotal, pricePerDay} = req.body;
+export const addURL = async (req, res) =>{
+    const {url} = req.body;
+    const {authorization} = req.headers;
+    
+    const shortUrl = nanoid()
+    const token = authorization.slice(7)
+
+    const queryInfo = [token, url, shortUrl]
     try{
-        const gamerRegistered = await db.query(`SELECT * FROM games WHERE name=$1`, [name])
+        const urlRegistered = await db.query(`SELECT * FROM links WHERE original=$1`, [url])
 
-        if (gamerRegistered.rows[0]) return res.sendStatus(409)
+        if (urlRegistered.rows[0]) return res.sendStatus(409)
+        const {user_id} = (await db.query(`SELECT * FROM tokens WHERE token=$1`, [token])).rows[0]
 
-        await db.query(`INSERT INTO games (name, image, "stockTotal", "pricePerDay") VALUES ($1, $2, $3, $4);`, [name, image, stockTotal, pricePerDay]);
+
+        await db.query(`INSERT INTO links (user_id, original, short) VALUES ($1, $2, $3);`, [user_id, url, shortUrl]);
         
-        res.sendStatus(201)
+        const done = (await db.query(`SELECT * FROM links WHERE original=$1`, [url])).rows[0]
+        res.status(201).send({id: done.id, shortUrl})
     }
     catch{
-        res.sendStatus(400)
+        res.sendStatus(422)
     }
 }
 
-export const getGames = async (req, res) =>{
+export const getURL = async (req, res) =>{
     const {name, limit, offset, desc} = req.query;
     let {order} = req.query;
 
