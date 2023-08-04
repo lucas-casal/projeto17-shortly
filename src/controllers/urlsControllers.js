@@ -64,3 +64,24 @@ export const openURL = async (req, res) => {
         res.sendStatus(400)
     }
 }
+
+export const ranking = async (req, res) => {
+    const topUsers = (await db.query(`
+        SELECT users.id, users.name, SUM(links.views) as "viewsCount",
+        COUNT(links.original) as "linksCount"
+  		FROM links
+      	RIGHT JOIN users ON users.id = links.user_id
+        GROUP BY users.id 
+		ORDER BY "viewsCount"
+		LIMIT 10
+		;
+	`)).rows
+
+    topUsers.map(x => {
+        if (x.viewsCount === null){
+            x.viewsCount = '0'
+        }
+    })
+
+    res.send(topUsers)
+}
