@@ -27,37 +27,38 @@ export const addURL = async (req, res) =>{
 }
 
 export const getURL = async (req, res) =>{
-    const {name, limit, offset, desc} = req.query;
-    let {order} = req.query;
-
-    const queryInfo = []
-    name ? queryInfo.push(name+'%') : ''
-    limit ? queryInfo.push(limit): ''
-    offset ? queryInfo.push(offset): ''
-
-
-    const indexArray = ['']
-    name ? indexArray.push('name') : ''
-    limit ? indexArray.push('limit'): ''
-    offset ? indexArray.push('offset'): ''
-
-
-    if(order?.includes(';')){
-        order = order.slice(0, order.indexOf(';'))
-    }
+    const {id} = req.params;
 
 
     try{
-        const games = (await db.query(`
+        const shorted = (await db.query(`
         SELECT * 
-        FROM games 
-        ${name ? `WHERE lower(name) LIKE lower($${indexArray.indexOf('name')})` : ``}
-        ${order ? `ORDER BY "${order}" ${desc ? `DESC`: ``}` : ``}
-        ${limit ? `LIMIT $${indexArray.indexOf('limit')}` : ``}
-        ${offset ? `OFFSET $${indexArray.indexOf('offset')}` : ``}
-        ;`, queryInfo)).rows
+        FROM links
+        WHERE id=$1
+        ;`, [id])).rows[0]
         
-        res.status(200).send(games)
+        if (!shorted) return res.sendStatus(404)
+        
+        delete shorted.user_id
+        delete shorted.views
+
+        res.status(200).send(shorted)
+    }
+    catch{
+        res.sendStatus(400)
+    }
+}
+
+export const openURL = async (req, res) => {
+    const {shortUrl} = req.params;
+    try{
+        const shorted = (await db.query(`SELECT * FROM links WHERE short=$1`, [shortUrl])).rows[0]
+        if (!shorted) return res.sendStatus(404)
+
+        shorted.views++
+
+        await db.query(`UPDATE links SET views=$1 WHERE id=$2;`, [shorted.views, shorted.id])
+        res.redirect(200,shorted.original)
     }
     catch{
         res.sendStatus(400)

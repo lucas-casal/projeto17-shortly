@@ -41,16 +41,28 @@ export const login = async (req, res) => {
 }
 
 export const getUser = async (req, res) => {
-    const {id} = req.params;
-    if (isNaN(id) || !Number.isInteger(parseFloat(id)) || id < 0) return res.sendStatus(400)
+    const {authorization} = req.headers;
+    const token = authorization.slice(7)
+    console.log(token)
     try{
-        const userRegistered = await (await db.query(`SELECT * FROM users WHERE id=$1`, [id])).rows[0]
+        const userRegistered = (await db.query(`
+        SELECT users.id, users.name, SUM(links.views) as "viewsCount",
+        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.original, 'viewsCount', links.views) order by links.id) as "shortenedUrls"
+        FROM tokens 
+        inner JOIN users ON users.id = tokens.user_id
+        left JOIN links ON links.user_id = tokens.user_id
+        WHERE token=$1
+        GROUP BY users.id;
+        `, [token])).rows[0]
         
-        if (!userRegistered) return res.sendStatus(404)
+        if(!userRegistered) return res.sendStatus(404)
 
-        const formatado = dayjs(userRegistered.birthday).format("YYYY-MM-DD");
+        if (userRegistered.viewsCount === null) {
+            userRegistered.viewsCount = 0
+            userRegistered.shortenedUrls = []
+        }
+       
         
-        userRegistered.birthday = formatado
         res.send(userRegistered)
     }
     catch{
