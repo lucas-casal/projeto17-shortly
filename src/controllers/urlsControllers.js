@@ -54,11 +54,11 @@ export const openURL = async (req, res) => {
     try{
         const shorted = (await db.query(`SELECT * FROM links WHERE short=$1`, [shortUrl])).rows[0]
         if (!shorted) return res.sendStatus(404)
-
+        console.log(shorted.views)
         shorted.views++
 
         await db.query(`UPDATE links SET views=$1 WHERE id=$2;`, [shorted.views, shorted.id])
-        res.redirect(200,shorted.original)
+        res.redirect(301, shorted.original)
     }
     catch{
         res.sendStatus(400)
@@ -67,12 +67,12 @@ export const openURL = async (req, res) => {
 
 export const ranking = async (req, res) => {
     const topUsers = (await db.query(`
-        SELECT users.id, users.name, SUM(links.views) as "viewsCount",
+    SELECT users.id, users.name, COALESCE(SUM(links.views), 0) as "viewsCount",
         COUNT(links.original) as "linksCount"
   		FROM links
-      	RIGHT JOIN users ON users.id = links.user_id
+      	right JOIN users ON users.id = links.user_id
         GROUP BY users.id 
-		ORDER BY "viewsCount"
+		ORDER BY "viewsCount" DESC
 		LIMIT 10
 		;
 	`)).rows
@@ -84,4 +84,36 @@ export const ranking = async (req, res) => {
     })
 
     res.send(topUsers)
+}
+
+export const deleteURL = async (req, res) => {
+    const {authorization} = req.headers
+    const {id} = req.params
+    const token = authorization.slice(7) 
+
+    if (!authorization) return res.sendStatus(401)
+    try{
+        const urlRegistered = (await db.query(`
+        SELECT * FROM links WHERE id=$1;`, [id])).rows[0]
+       
+        if (!urlRegistered) return res.sendStatus(404)
+
+        const matching = (await db.query(`
+        SELECT * 
+        FROM tokens 
+        WHERE token=$1`, [token])).rows[0]
+        if (!matching) return res.sendStatus(401)
+
+        if (matching.token !== token) return res.sendStatus(401)
+        
+        await db.query(`
+        DELETE FROM links 
+        WHERE id=$1
+        `, [id])
+
+        res.sendStatus(204)
+    }
+    catch{
+        res.sendStatus(400)
+    }
 }
