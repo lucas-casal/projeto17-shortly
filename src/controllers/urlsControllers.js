@@ -10,22 +10,22 @@ export const addURL = async (req, res) =>{
     const shortUrl = nanoid()
     const token = authorization.slice(7)
 
-    const queryInfo = [token, url, shortUrl]
     try{
-        const {user_id} = (await searchUserByToken(token)).rows[0]
-        if (!user_id) return res.sendStatus(401)
+        console.log(token)
+
+        const userRegistered = (await searchUserByToken(token)).rows[0]
+        if (!userRegistered) return res.sendStatus(401)
 
         const urlRegistered = (await searchLinkByURL(url)).rows[0]
         if (urlRegistered) return res.sendStatus(409)
 
-
-        await insertNewLink(user_id, url, shortUrl)
+        await insertNewLink(userRegistered.user_id, url, shortUrl)
         
         const done = (await searchLinkbyURL(url)).rows[0]
         res.status(201).send({id: done.id, shortUrl})
     }
     catch{
-        res.sendStatus(422)
+        res.sendStatus(400)
     }
 }
 
@@ -108,7 +108,7 @@ export const nickURL = async (req, res) => {
 
     try{
         const urlRegistered = (await searchLinkById(id)).rows[0]
-        
+
         if (!urlRegistered) return res.sendStatus(404)
 
         const matching = (await searchUserByToken(token)).rows[0]
