@@ -1,19 +1,18 @@
-import dayjs from "dayjs";
 import { db } from "../database.js";
 import bcrypt from 'bcrypt'
 import { v4 as uuid } from "uuid";
+import { getUserByToken, insertNewToken, insertNewUser, searchUserByEmail } from "../repositories/user.repository.js";
 
 export const addUser = async (req, res) => {
     const {email, name, password, confirmPassword} = req.body;
     if (password !== confirmPassword) return res.sendStatus(422)
-    const hash = bcrypt.hashSync(password, 10);
 
     try{
 
-        const userRegistered = await db.query(`SELECT * FROM users WHERE email=$1;`, [email])
-        if (userRegistered.rows[0]) return res.status(409).send(`email ${email} já está em uso`)
- 
-        await db.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`, [name, email, hash])
+        const userRegistered = (await searchUserByEmail(email)).rows[0]
+        if (userRegistered) return res.status(409).send(`email ${email} já está em uso`)
+        
+        await insertNewUser(name, email, password) 
         res.sendStatus(201)
     }
     catch{
@@ -26,11 +25,12 @@ export const login = async (req, res) => {
     const token = uuid();
     try{
 
-        const userRegistered = await (await db.query(`SELECT * FROM users WHERE email=$1;`, [email])).rows[0]
+        const userRegistered = (await searchUserByEmail(email)).rows[0]
+        console.log(userRegistered)
         if (!userRegistered) return res.sendStatus(401);
         if (!bcrypt.compareSync(password, userRegistered.password)) return res.sendStatus(401);
-
-        await db.query(`INSERT INTO tokens (user_id, token) VALUES ($1, $2);`, [userRegistered.id, token])
+        
+        await insertNewToken(userRegistered.id)
         res.status(200).send({token})
     }
     catch{
@@ -42,15 +42,7 @@ export const getUser = async (req, res) => {
     const {authorization} = req.headers;
     const token = authorization.slice(7)
     try{
-        const userRegistered = (await db.query(`
-        SELECT users.id, users.name, SUM(links.views) as "visitCount",
-        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.url, 'visitCount', links.views, 'nickname', links.nickname) order by links.id) as "shortenedUrls"
-        FROM tokens 
-        inner JOIN users ON users.id = tokens.user_id
-        left JOIN links ON links.user_id = tokens.user_id
-        WHERE token=$1
-        GROUP BY users.id;
-        `, [token])).rows[0]
+        const userRegistered = (await getUserByToken(token)).rows[0]
         
         if(!userRegistered) return res.sendStatus(404)
 

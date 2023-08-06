@@ -5,7 +5,7 @@
 -- Dumped from database version 15.3 (Ubuntu 15.3-0ubuntu0.23.04.1)
 -- Dumped by pg_dump version 15.3 (Ubuntu 15.3-0ubuntu0.23.04.1)
 
--- Started on 2023-08-06 01:14:37 -03
+-- Started on 2023-08-06 02:22:08 -03
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,10 +30,11 @@ SET default_table_access_method = heap;
 CREATE TABLE public.links (
     id integer NOT NULL,
     user_id integer,
-    original text NOT NULL,
+    url text NOT NULL,
     short text NOT NULL,
     views integer DEFAULT 0,
-    nickname text DEFAULT ''::text NOT NULL
+    nickname text DEFAULT ''::text NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT CURRENT_DATE NOT NULL
 );
 
 
@@ -52,7 +53,7 @@ CREATE SEQUENCE public.links_id_seq
 
 
 --
--- TOC entry 3409 (class 0 OID 0)
+-- TOC entry 3412 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: links_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -67,7 +68,8 @@ ALTER SEQUENCE public.links_id_seq OWNED BY public.links.id;
 
 CREATE TABLE public.tokens (
     user_id integer NOT NULL,
-    token text NOT NULL
+    token text NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT CURRENT_DATE NOT NULL
 );
 
 
@@ -80,7 +82,8 @@ CREATE TABLE public.users (
     id integer NOT NULL,
     name text NOT NULL,
     email text NOT NULL,
-    password text NOT NULL
+    password text NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT CURRENT_DATE NOT NULL
 );
 
 
@@ -99,7 +102,7 @@ CREATE SEQUENCE public.users_id_seq
 
 
 --
--- TOC entry 3410 (class 0 OID 0)
+-- TOC entry 3413 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
@@ -108,7 +111,7 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- TOC entry 3245 (class 2604 OID 16577)
+-- TOC entry 3246 (class 2604 OID 16577)
 -- Name: links id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -124,16 +127,16 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
--- TOC entry 3253 (class 2606 OID 16583)
+-- TOC entry 3256 (class 2606 OID 16583)
 -- Name: links links_original_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.links
-    ADD CONSTRAINT links_original_key UNIQUE (original);
+    ADD CONSTRAINT links_original_key UNIQUE (url);
 
 
 --
--- TOC entry 3255 (class 2606 OID 16581)
+-- TOC entry 3258 (class 2606 OID 16581)
 -- Name: links links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -142,7 +145,7 @@ ALTER TABLE ONLY public.links
 
 
 --
--- TOC entry 3257 (class 2606 OID 16585)
+-- TOC entry 3260 (class 2606 OID 16585)
 -- Name: links links_short_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -151,7 +154,7 @@ ALTER TABLE ONLY public.links
 
 
 --
--- TOC entry 3259 (class 2606 OID 16597)
+-- TOC entry 3262 (class 2606 OID 16597)
 -- Name: tokens tokens_token_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -160,7 +163,7 @@ ALTER TABLE ONLY public.tokens
 
 
 --
--- TOC entry 3249 (class 2606 OID 16572)
+-- TOC entry 3252 (class 2606 OID 16572)
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -169,7 +172,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3251 (class 2606 OID 16570)
+-- TOC entry 3254 (class 2606 OID 16570)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -178,7 +181,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3260 (class 2606 OID 16586)
+-- TOC entry 3263 (class 2606 OID 16586)
 -- Name: links links_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -187,7 +190,7 @@ ALTER TABLE ONLY public.links
 
 
 --
--- TOC entry 3261 (class 2606 OID 16598)
+-- TOC entry 3264 (class 2606 OID 16598)
 -- Name: tokens tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -195,7 +198,7 @@ ALTER TABLE ONLY public.tokens
     ADD CONSTRAINT tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
--- Completed on 2023-08-06 01:14:37 -03
+-- Completed on 2023-08-06 02:22:08 -03
 
 --
 -- PostgreSQL database dump complete

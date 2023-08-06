@@ -1,5 +1,7 @@
 import {db} from '../database.js'
 import { nanoid } from 'nanoid';
+import { searchUserByToken } from '../repositories/user.repository.js';
+import { deleteLinkById, getRanking, insertNewLink, searchLinkById, searchLinkByShort, searchLinkByURL, searchLinkbyURL, updateNickById } from '../repositories/url.repository.js';
 
 export const addURL = async (req, res) =>{
     const {url} = req.body;
@@ -10,16 +12,16 @@ export const addURL = async (req, res) =>{
 
     const queryInfo = [token, url, shortUrl]
     try{
-        const {user_id} = (await db.query(`SELECT * FROM tokens WHERE token=$1`, [token])).rows[0]
+        const {user_id} = (await searchUserByToken(token)).rows[0]
         if (!user_id) return res.sendStatus(401)
 
-        const urlRegistered = (await db.query(`SELECT * FROM links WHERE url=$1`, [url])).rows[0]
+        const urlRegistered = (await searchLinkByURL(url)).rows[0]
         if (urlRegistered) return res.sendStatus(409)
 
 
-        await db.query(`INSERT INTO links (user_id, url, short) VALUES ($1, $2, $3);`, [user_id, url, shortUrl]);
+        await insertNewLink(user_id, url, shortUrl)
         
-        const done = (await db.query(`SELECT * FROM links WHERE url=$1`, [url])).rows[0]
+        const done = (await searchLinkbyURL(url)).rows[0]
         res.status(201).send({id: done.id, shortUrl})
     }
     catch{
@@ -32,11 +34,7 @@ export const getURL = async (req, res) =>{
 
 
     try{
-        const shorted = (await db.query(`
-        SELECT * 
-        FROM links
-        WHERE id=$1
-        ;`, [id])).rows[0]
+        const shorted = (await searchLinkById(id)).rows[0]
         
         if (!shorted) return res.sendStatus(404)
         
@@ -53,7 +51,7 @@ export const getURL = async (req, res) =>{
 export const openURL = async (req, res) => {
     const {shortUrl} = req.params;
     try{
-        const shorted = (await db.query(`SELECT * FROM links WHERE short=$1`, [shortUrl])).rows[0]
+        const shorted = (await searchLinkByShort(shortUrl)).rows[0]
         if (!shorted) return res.sendStatus(404)
         shorted.views++
 
@@ -66,20 +64,11 @@ export const openURL = async (req, res) => {
 }
 
 export const ranking = async (req, res) => {
-    const topUsers = (await db.query(`
-    SELECT users.id, users.name, COALESCE(SUM(links.views), 0) as "viewsCount",
-        COUNT(links.url) as "linksCount"
-  		FROM links
-      	right JOIN users ON users.id = links.user_id
-        GROUP BY users.id 
-		ORDER BY "viewsCount" DESC
-		LIMIT 10
-		;
-	`)).rows
+    const topUsers = (await getRanking()).rows
 
     topUsers.map(x => {
-        if (x.viewsCount === null){
-            x.viewsCount = '0'
+        if (x.visitCount === null){
+            x.visitCount = '0'
         }
     })
 
@@ -92,23 +81,17 @@ export const deleteURL = async (req, res) => {
     const token = authorization.slice(7) 
 
     try{
-        const urlRegistered = (await db.query(`
-        SELECT * FROM links WHERE id=$1;`, [id])).rows[0]
+        const urlRegistered = (await searchLinkById(id)).rows[0]
        
         if (!urlRegistered) return res.sendStatus(404)
 
-        const matching = (await db.query(`
-        SELECT * 
-        FROM tokens 
-        WHERE token=$1`, [token])).rows[0]
+        const matching = (await searchUserByToken(token)).rows[0]
+
         if (!matching) return res.sendStatus(401)
 
         if (matching.user_id !== urlRegistered.user_id) return res.sendStatus(401)
         
-        await db.query(`
-        DELETE FROM links 
-        WHERE id=$1
-        `, [id])
+        await deleteLinkById(id)
 
         res.sendStatus(204)
     }
@@ -124,21 +107,16 @@ export const nickURL = async (req, res) => {
     const token = authorization.slice(7) 
 
     try{
-        const urlRegistered = (await db.query(`
-        SELECT * FROM links WHERE id=$1;`, [id])).rows[0]
-       
+        const urlRegistered = (await searchLinkById(id)).rows[0]
+        
         if (!urlRegistered) return res.sendStatus(404)
 
-        const matching = (await db.query(`
-        SELECT * 
-        FROM tokens 
-        WHERE token=$1`, [token])).rows[0]
+        const matching = (await searchUserByToken(token)).rows[0]
         if (!matching) return res.sendStatus(401)
 
         if (matching.token !== token) return res.sendStatus(401)
         
-        await db.query(`
-        UPDATE links SET nickname=$1 WHERE id=$2`, [newNick, id])
+        await updateNickById(id, newNick)
         res.sendStatus(200)
     }
     catch{
