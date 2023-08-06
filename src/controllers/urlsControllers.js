@@ -54,7 +54,6 @@ export const openURL = async (req, res) => {
     try{
         const shorted = (await db.query(`SELECT * FROM links WHERE short=$1`, [shortUrl])).rows[0]
         if (!shorted) return res.sendStatus(404)
-        console.log(shorted.views)
         shorted.views++
 
         await db.query(`UPDATE links SET views=$1 WHERE id=$2;`, [shorted.views, shorted.id])
@@ -91,7 +90,6 @@ export const deleteURL = async (req, res) => {
     const {id} = req.params
     const token = authorization.slice(7) 
 
-    if (!authorization) return res.sendStatus(401)
     try{
         const urlRegistered = (await db.query(`
         SELECT * FROM links WHERE id=$1;`, [id])).rows[0]

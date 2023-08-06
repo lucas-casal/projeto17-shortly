@@ -24,16 +24,14 @@ export const addUser = async (req, res) => {
 export const login = async (req, res) => {
     const {email, password} = req.body;
     const token = uuid();
-    console.log(token)
     try{
 
         const userRegistered = await (await db.query(`SELECT * FROM users WHERE email=$1;`, [email])).rows[0]
-        console.log(userRegistered)
-        if (!userRegistered) return res.sendStatus(404);
+        if (!userRegistered) return res.sendStatus(401);
         if (!bcrypt.compareSync(password, userRegistered.password)) return res.sendStatus(401);
 
         await db.query(`INSERT INTO tokens (user_id, token) VALUES ($1, $2);`, [userRegistered.id, token])
-        res.status(200).send(token)
+        res.status(200).send({token})
     }
     catch{
         res.sendStatus(400)
@@ -43,7 +41,6 @@ export const login = async (req, res) => {
 export const getUser = async (req, res) => {
     const {authorization} = req.headers;
     const token = authorization.slice(7)
-    console.log(token)
     try{
         const userRegistered = (await db.query(`
         SELECT users.id, users.name, SUM(links.views) as "viewsCount",
