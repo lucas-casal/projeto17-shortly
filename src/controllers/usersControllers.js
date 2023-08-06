@@ -47,7 +47,7 @@ export const getUser = async (req, res) => {
     try{
         const userRegistered = (await db.query(`
         SELECT users.id, users.name, SUM(links.views) as "viewsCount",
-        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.original, 'viewsCount', links.views) order by links.id) as "shortenedUrls"
+        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.original, 'viewsCount', links.views, 'nickname', links.nickname) order by links.id) as "shortenedUrls"
         FROM tokens 
         inner JOIN users ON users.id = tokens.user_id
         left JOIN links ON links.user_id = tokens.user_id

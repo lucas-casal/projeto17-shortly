@@ -117,3 +117,32 @@ export const deleteURL = async (req, res) => {
         res.sendStatus(400)
     }
 }
+
+export const nickURL = async (req, res) => {
+    const {authorization} = req.headers;
+    const {newNick} = req.body;
+    const {id} = req.params;
+    const token = authorization.slice(7) 
+
+    try{
+        const urlRegistered = (await db.query(`
+        SELECT * FROM links WHERE id=$1;`, [id])).rows[0]
+       
+        if (!urlRegistered) return res.sendStatus(404)
+
+        const matching = (await db.query(`
+        SELECT * 
+        FROM tokens 
+        WHERE token=$1`, [token])).rows[0]
+        if (!matching) return res.sendStatus(401)
+
+        if (matching.token !== token) return res.sendStatus(401)
+        
+        await db.query(`
+        UPDATE links SET nickname=$1 WHERE id=$2`, [newNick, id])
+        res.sendStatus(200)
+    }
+    catch{
+        res.sendStatus(400)
+    }
+}
