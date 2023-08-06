@@ -43,8 +43,8 @@ export const getUser = async (req, res) => {
     const token = authorization.slice(7)
     try{
         const userRegistered = (await db.query(`
-        SELECT users.id, users.name, SUM(links.views) as "viewsCount",
-        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.original, 'viewsCount', links.views, 'nickname', links.nickname) order by links.id) as "shortenedUrls"
+        SELECT users.id, users.name, SUM(links.views) as "visitCount",
+        json_agg(json_build_object('id', links.iD, 'shortedUrl', links.short, 'url', links.url, 'visitCount', links.views, 'nickname', links.nickname) order by links.id) as "shortenedUrls"
         FROM tokens 
         inner JOIN users ON users.id = tokens.user_id
         left JOIN links ON links.user_id = tokens.user_id
@@ -54,8 +54,8 @@ export const getUser = async (req, res) => {
         
         if(!userRegistered) return res.sendStatus(404)
 
-        if (userRegistered.viewsCount === null) {
-            userRegistered.viewsCount = 0
+        if (userRegistered.visitCount === null) {
+            userRegistered.visitCount = 0
             userRegistered.shortenedUrls = []
         }
        
