@@ -6,8 +6,8 @@ export async function searchUserByToken(x) {
     return await db.query(`SELECT * FROM tokens WHERE token=$1`, [x])
 }
 
-export async function searchUserByEmail(x) {
-    return await db.query(`SELECT * FROM users WHERE email=$1`, [x])
+export async function searchUserByEmail(email) {
+    return await db.query(`SELECT * FROM users WHERE email=$1`, [email])
 }
 
 export async function insertNewUser(name, email, password) {
@@ -15,10 +15,7 @@ export async function insertNewUser(name, email, password) {
     return await db.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`, [name, email, hash])
 }
 
-export async function insertNewToken(userId) {
-
-    console.log(userId)
-    console.log(token)
+export async function insertNewToken(userId, token) {
     return await db.query(`INSERT INTO tokens (user_id, token) VALUES ($1, $2);`, [userId, token])
 }
 

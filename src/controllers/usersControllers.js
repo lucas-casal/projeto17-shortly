@@ -30,7 +30,7 @@ export const login = async (req, res) => {
         if (!userRegistered) return res.sendStatus(401);
         if (!bcrypt.compareSync(password, userRegistered.password)) return res.sendStatus(401);
         
-        await insertNewToken(userRegistered.id)
+        await insertNewToken(userRegistered.id, token)
         res.status(200).send({token})
     }
     catch{
