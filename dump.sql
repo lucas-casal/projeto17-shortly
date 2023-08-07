@@ -5,7 +5,7 @@
 -- Dumped from database version 15.3 (Ubuntu 15.3-0ubuntu0.23.04.1)
 -- Dumped by pg_dump version 15.3 (Ubuntu 15.3-0ubuntu0.23.04.1)
 
--- Started on 2023-08-06 02:22:08 -03
+-- Started on 2023-08-06 21:45:11 -03
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -31,7 +31,7 @@ CREATE TABLE public.links (
     id integer NOT NULL,
     user_id integer,
     url text NOT NULL,
-    short text NOT NULL,
+    "shortUrl" text NOT NULL,
     views integer DEFAULT 0,
     nickname text DEFAULT ''::text NOT NULL,
     "createdAt" timestamp without time zone DEFAULT CURRENT_DATE NOT NULL
@@ -150,7 +150,7 @@ ALTER TABLE ONLY public.links
 --
 
 ALTER TABLE ONLY public.links
-    ADD CONSTRAINT links_short_key UNIQUE (short);
+    ADD CONSTRAINT links_short_key UNIQUE ("shortUrl");
 
 
 --
@@ -198,7 +198,7 @@ ALTER TABLE ONLY public.tokens
     ADD CONSTRAINT tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
--- Completed on 2023-08-06 02:22:08 -03
+-- Completed on 2023-08-06 21:45:11 -03
 
 --
 -- PostgreSQL database dump complete
