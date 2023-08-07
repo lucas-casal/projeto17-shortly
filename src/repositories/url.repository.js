@@ -5,7 +5,7 @@ export async function searchLinkByURL(x) {
 }
 
 export async function insertNewLink(userId, url, shortUrl) {
-    return db.query(`INSERT INTO links (user_id, url, shortUrl) VALUES ($1, $2, $3);`, [userId, url, shortUrl]);
+    return db.query(`INSERT INTO links (user_id, url, "shortUrl") VALUES ($1, $2, $3);`, [userId, url, shortUrl]);
 }
 
 export async function searchLinkbyURL (x) { 
@@ -21,7 +21,7 @@ export async function searchLinkById (x) {
 }
 
 export async function searchLinkByShort (x) {
-    return db.query(`SELECT * FROM links WHERE shortUrl=$1`, [x])
+    return db.query(`SELECT * FROM links WHERE "shortUrl"=$1`, [x])
 }
 
 export async function getRanking() {
