@@ -44,7 +44,7 @@ export const getUser = async (req, res) => {
     try{
         const userRegistered = (await getUserByToken(token)).rows[0]
         
-        if(!userRegistered) return res.sendStatus(404)
+        if(!userRegistered) return res.sendStatus(401)
 
         if (userRegistered.visitCount === null) {
             userRegistered.visitCount = 0
